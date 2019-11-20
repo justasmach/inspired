@@ -7,3 +7,7 @@ __init__.py
 *.ini
 *.yaml
 *.json
+Eurostat/.ipynb_checkpoints/Eurostat_script-checkpoint.ipynb
+Facebook Marketing/.ipynb_checkpoints/facebook_marketing_script-checkpoint.ipynb
+Google Ads/.ipynb_checkpoints/google_ads_script-checkpoint.ipynb
+Google Analytics/.ipynb_checkpoints/google_analytics_script-checkpoint.ipynb
