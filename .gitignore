@@ -1,34 +1,9 @@
 
-Google Ads/database.ini
-Google Ads/googleads.yaml
-Google Ads/google_ads_conf_1.xlsx
-Google Analytics/database.ini
-Google Analytics/client_secrets.json
-Google Analytics/google_analytics_conf_1.xlsx
-Google Ads/.ipynb_checkpoints/google_ads_script-checkpoint.ipynb
-Google Analytics/.ipynb_checkpoints/google_analytics_script-checkpoint.ipynb
-Facebook Marketing/fb_secrets.yaml
-Facebook Marketing/database.ini
-Google Analytics/.ipynb_checkpoints/google_analytics_script-checkpoint.ipynb
-Google Ads/.ipynb_checkpoints/google_ads_script-checkpoint.ipynb
-Facebook Marketing/.ipynb_checkpoints/facebook_marketing_script-checkpoint.ipynb
-Google Ads/.ipynb_checkpoints/google_ads_script-checkpoint.ipynb
-Google Ads/.ipynb_checkpoints/google_ads_script-checkpoint.ipynb
-Google Analytics/__pycache__/helper_functions.cpython-37.pyc
-Google Ads/__pycache__/helper_functions.cpython-37.pyc
-Facebook Marketing/~$facebook_marketing_conf_1.xlsx
-Google Ads/~$google_ads_conf_1.xlsx
-Google Analytics/~$google_analytics_conf_1.xlsx
-Google Analytics/.ipynb_checkpoints/google_analytics_script-checkpoint.ipynb
-Google Analytics/.ipynb_checkpoints/google_analytics_script-checkpoint.ipynb
-__pycache__/helper_functions.cpython-37.pyc
-Eurostat/.ipynb_checkpoints/Untitled-checkpoint.ipynb
-Eurostat/.ipynb_checkpoints/Eurostat_script-checkpoint.ipynb
-Facebook Marketing/__pycache__/helper_functions.cpython-37.pyc
-Google Ads/.ipynb_checkpoints/google_ads_script-checkpoint.ipynb
-Google Ads/.ipynb_checkpoints/google_ads_script-checkpoint.ipynb
-Google Analytics/.ipynb_checkpoints/google_analytics_script-checkpoint.ipynb
 __init__.py
+*.pyc
 *.xlsx
-Facebook Marketing/facebook_marketing_conf_1.xlsx
 *.ini
+*.xlsx
+*.ini
+*.yaml
+*.json
