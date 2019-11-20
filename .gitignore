@@ -31,3 +31,4 @@ Google Analytics/.ipynb_checkpoints/google_analytics_script-checkpoint.ipynb
 __init__.py
 *.xlsx
 Facebook Marketing/facebook_marketing_conf_1.xlsx
+*.ini
