@@ -11,3 +11,10 @@ Eurostat/.ipynb_checkpoints/Eurostat_script-checkpoint.ipynb
 Facebook Marketing/.ipynb_checkpoints/facebook_marketing_script-checkpoint.ipynb
 Google Ads/.ipynb_checkpoints/google_ads_script-checkpoint.ipynb
 Google Analytics/.ipynb_checkpoints/google_analytics_script-checkpoint.ipynb
+*.dio
+AdForm/.ipynb_checkpoints/adform_script-checkpoint.ipynb
+.ipynb_checkpoints/helper_functions-checkpoint.py
+Facebook Marketing Weekly Maxima/.ipynb_checkpoints/facebook_marketing_script-checkpoint.ipynb
+Facebook Marketing Weekly Maxima/.ipynb_checkpoints/facebook_marketing_script_weekly_maxima-checkpoint.ipynb
+Facebook Marketing Weekly Maxima/facebook_marketing_script_weekly_maxima.ipynb
+*.txt

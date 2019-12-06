@@ -1,11 +1,14 @@
 ###### import everything upwards from home dir
 from __future__ import absolute_import
-import psycopg2, argparse, six, re, datetime, json, yaml, sys, io, os, xlrd
+import psycopg2, argparse, six, re, datetime, json, yaml, sys, io, os, xlrd, time
+from xlrd import XLRDError
 from configparser import ConfigParser
 from os import path
 import psycopg2.extras
 import pandas as pd
 import numpy as np
+import smtplib
+import urllib.request
 import google.ads.google_ads.client
 from googleapiclient.discovery import build
 from googleapiclient import http
@@ -17,8 +20,13 @@ from facebook_business.adobjects.campaign import Campaign
 from facebook_business.adobjects.adset import AdSet
 from facebookads.adobjects.adsinsights import AdsInsights
 from ast import literal_eval
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from oauth2client.service_account import ServiceAccountCredentials
+
+
+
+
+
 
 # ---------------- DATABASE FUNCTIONS ----------------
 
@@ -44,7 +52,7 @@ def db_config(filename, section):
 def init_conn():
     conn = None
     base, tail = os.path.split(os.getcwd())
-    filename = path.join(base, "database.ini")
+    filename = path.join(base, 'database.ini')
     params = db_config(filename, 'postgresql')
     conn = psycopg2.connect(**params)
     return conn
@@ -110,7 +118,8 @@ def get_db_cols(cur, t_name):
 
 # use regex to extract PLN from a single string
 def pln_no_reg(campaign_name):
-    return str(re.findall('(PLN?[\-]\d{1,4}?[\-]\d{1,4})', campaign_name))[2:-2]
+    pln_no = str(re.findall('(PLN?[\-]\d{1,4}?[\-]\d{1,4})', campaign_name))[2:-2]
+    return pln_no
 
 # use regex to extract only the campaign name from a single string
 def name_cl_reg(campaign_name):
@@ -157,6 +166,43 @@ def add_missing_cl_str(dtype_dict, db_cols):
             str_full = str_full + str_part + key + ' ' + dtype_dict[key] + ', '
         str_full = str_full[:-2]     
     return str_full
+
+# ---------------- DATETIME OPERATIONS ----------------
+
+# return formatted period for last 90 days
+def upd_last_90(period_xlsx, per_format):     
+    if isinstance(period_xlsx, list):
+        check_str = str(period_xlsx[0])
+    else:
+        check_str = period_xlsx
+    if check_str == 'upd_last_90':
+        end_date = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+        start_date = (date.today() - timedelta(days=90)).strftime("%Y-%m-%d")
+        if per_format == 'lst':
+            return start_date, end_date
+        else:
+            period_xlsx = per_format.replace('x1', start_date)
+            period_xlsx = period_xlsx.replace('x2', end_date)
+            return period_xlsx
+    else:
+        return period_xlsx
+
+# split received period to defined intervals, currently only for facebook
+def period_split(def_period, def_intv):
+    start = datetime.strptime(list(def_period.values())[0],"%Y-%m-%d")
+    end = datetime.strptime(list(def_period.values())[1],"%Y-%m-%d")
+    diff = (end  - start ) / def_intv
+    period_lst = []
+    curr = start
+    period_lst.append(start.strftime("%Y-%m-%d"))
+    while True:
+        curr = curr + timedelta(days = def_intv)
+        if curr >= end:
+            break
+        else:
+            period_lst.append(curr.strftime("%Y-%m-%d"))
+    period_lst.append(end.strftime("%Y-%m-%d"))
+    return period_lst
 
 # ---------------- DATAFRAME OPERATIONS ----------------
 
@@ -222,7 +268,7 @@ def get_types(df_response):
 
 # ---------------- MAIN ----------------
 
-# main method which calls all functions in sequence
+# main method which calls required functions in sequence
 def postgre_write_main(df_response, t_name, pk_name, pk_lst, do_drop, page_size, src_col_name, is_pln_df):
     try:
         df_response = df_response.rename(columns=rename_col)
