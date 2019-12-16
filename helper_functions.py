@@ -22,9 +22,9 @@ from facebookads.adobjects.adsinsights import AdsInsights
 from ast import literal_eval
 from datetime import datetime, timedelta, date
 from oauth2client.service_account import ServiceAccountCredentials
+from func_timeout import func_timeout, FunctionTimedOut
 
-
-
+# from itertools import count
 
 
 
@@ -142,7 +142,7 @@ def rename_col(col_name):
         return col_name.replace('.', '_')
     elif ':' in col_name:
         return col_name.replace(':', '_')
-    elif col_name[0].isdigit():
+    elif col_name[0].isdigit() or col_name == 'order':
         return ('_' + col_name)
     else:
         return col_name
@@ -266,10 +266,28 @@ def get_types(df_response):
         col_dtypes.update({key : dtype})
     return col_dtypes
 
+# ---------------- OTHER ----------------
+
+# create log entry for row passed
+def log_string(platform, text):
+    now = datetime.now()
+    curr_date = now.strftime('%m_%d_%Y')
+    timestamp = now.strftime("%d-%b-%Y (%H:%M:%S.%f)")
+    filename = platform + '_' + 'log' + '_' + curr_date + '.txt'
+    
+    if os.path.exists(filename):
+        append_write = 'a'
+    else:
+        append_write = 'w'
+    std_copy = open(filename, append_write)
+    std_copy.write('[' + timestamp + ']:    ')
+    std_copy.write(str(text))
+    std_copy.write('\n')
+
 # ---------------- MAIN ----------------
 
 # main method which calls required functions in sequence
-def postgre_write_main(df_response, t_name, pk_name, pk_lst, do_drop, page_size, src_col_name, is_pln_df):
+def postgre_write_main(df_response, t_name, pk_name, pk_lst, do_drop, page_size, src_col_name, is_pln_df, log_pltfrm):
     try:
         df_response = df_response.rename(columns=rename_col)
         df_response = get_pln_no(df_response, src_col_name, is_pln_df)
@@ -294,11 +312,14 @@ def postgre_write_main(df_response, t_name, pk_name, pk_lst, do_drop, page_size,
         end_cur(cur)
         end_conn(conn)
     except (Exception, psycopg2.DatabaseError) as error:
-        print('Database error')
+        out_str = 'Database error'
+        log_string(log_pltfrm, out_str)
         print(error)
+        log_string(log_pltfrm, error)
         sys.exit(1)
     finally:
         if conn is not None:
             conn.close()
-    print('Database connection closed.')
-    print('')
+    out_str = 'Database connection closed.'
+    print(out_str)
+    log_string(log_pltfrm, out_str)

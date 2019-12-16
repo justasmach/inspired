@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[6]:
-
-
 import sys, os, os.path
 base, tail = os.path.split(os.getcwd())
 sys.path.append(base)
 from helper_functions import *
 
-def google_ads(client, customer_id, page_size, df_conf_req, period):
+def google_ads(client, customer_id, page_size, df_conf_req, period, log_pltfrm):
     ga_service = client.get_service('GoogleAdsService', version='v2')
     channel_types = client.get_type('AdvertisingChannelTypeEnum')
     
@@ -21,9 +18,12 @@ def google_ads(client, customer_id, page_size, df_conf_req, period):
         dim_str = dim_str + row['dimensions'] + ', '
     dim_str = dim_str[:-2]
     
-    print('Calling Google Ads API...')
+    out_str = 'Calling Google Ads API...'
+    print(out_str)
+    log_string(log_pltfrm, out_str)
     # make the call to Google Ads using compiled parameters 
     print(period)
+    log_string(log_pltfrm, period)
     query = f"SELECT {dim_str} FROM campaign WHERE {period}"
 
     response = ga_service.search(customer_id, query, page_size=page_size)
@@ -73,21 +73,32 @@ def google_ads(client, customer_id, page_size, df_conf_req, period):
                 
     # return error messages if exception
     except google.ads.google_ads.errors.GoogleAdsException as ex:
-        print('Request with ID "%s" failed with status "%s" and includes the '
+        out_str = ('Request with ID "%s" failed with status "%s" and includes the '
               'following errors:' % (ex.request_id, ex.error.code().name))
+        print(out_str)
+        log_string(log_pltfrm, out_str)
         for error in ex.failure.errors:
-            print('\tError with message "%s".' % error.message)
+            out_str = ('\tError with message "%s".' % error.message)
+            print(out_str)
+            log_string(log_pltfrm, out_str)
             if error.location:
                 for field_path_element in error.location.field_path_elements:
-                    print('\t\tOn field: %s' % field_path_element.field_name)
+                    out_str = ('\t\tOn field: %s' % field_path_element.field_name)
+                    print(out_str)
+                    log_string(log_pltfrm, out_str)
         sys.exit(1)
-    print(str(row_count + 1) + ' row(s) received')
+    out_str = (str(row_count + 1) + ' row(s) received')
+    print(out_str)
+    log_string(log_pltfrm, out_str)
     return df_response
                      
 def start():
     # If the google-ads.yaml file is present in home dir, GoogleAdsClient will read the configuration.  
     _DEFAULT_PAGE_SIZE = 500
-    print('Starting...')
+    log_pltfrm = 'google_ads'
+    out_str = ('Starting...')
+    print(out_str)
+    log_string(log_pltfrm, out_str)
     do_drop = False
     try:
         # read configuration from excel
@@ -105,8 +116,11 @@ def start():
         per_format = "segments.date >= 'x1' AND segments.date <= 'x2'"
         period = upd_last_90(period, per_format)
     except(NameError, XLRDError, KeyError) as error:
-        print('Error while reading configuration file(s)')
+        out_str = ('Error while reading configuration file(s)')
+        print(out_str)
+        log_string(log_pltfrm, out_str)
         print(error)
+        log_string(log_pltfrm, error)
         sys.exit(1)
     
     # iterate over customers
@@ -114,15 +128,34 @@ def start():
         try:
             customer_id = str(int(row['customer_id']))
             #customer_id = str(df_conf_base.iat[0,0])
-            print('Customer ID: ' + customer_id)
+            out_str = ('Customer ID: ' + customer_id)
+            print(out_str)
+            log_string(log_pltfrm, out_str)
         except(KeyError) as error:
-            print('Could not read column')
+            out_str = ('Could not read column')
+            print(out_str)
+            log_string(log_pltfrm, out_str)
             print(error)
+            log_string(log_pltfrm, error)
             sys.exit(1)
         
         # call defined methods
-        df_response = google_ads(google_ads_client, customer_id, _DEFAULT_PAGE_SIZE, df_conf_req, period)
-    
+        
+        out_str = 'Using multithreading!'
+        print(out_str)
+        log_string(log_pltfrm, out_str)        
+        try_cnt = 0
+        df_response = pd.DataFrame()
+        while try_cnt < 5 and df_response.empty:
+            try:
+                try_cnt = try_cnt + 1
+                df_response = func_timeout(1200, google_ads, args=(google_ads_client, customer_id, _DEFAULT_PAGE_SIZE, df_conf_req, period, log_pltfrm))
+            except FunctionTimedOut:
+                df_response = pd.DataFrame()
+                out_str = ('Could not complete call within 20 mins. Attempt no. ' + str(try_cnt) + ' out of 5')
+                print(out_str)
+                log_string(log_pltfrm, out_str)
+                
         t_name = 'google_ads_new'
         pk_name = 'google_ads_new_pk'
         pk_lst = ['campaign_id', 'segments_date']
@@ -130,10 +163,18 @@ def start():
         src_col_name = 'campaign_name'
         is_pln_df = True
         
+        print(df_response)
+        
         if not df_response.empty:
-            postgre_write_main(df_response, t_name, pk_name, pk_lst, do_drop, page_size, src_col_name, is_pln_df)
+            postgre_write_main(df_response, t_name, pk_name, pk_lst, do_drop, page_size, src_col_name, is_pln_df, log_pltfrm)
             do_drop = False
-        print('Success')
+            out_str = ('Dataframe not empty')
+            print(out_str)
+            log_string(log_pltfrm, out_str)
+        else:
+            out_str = ('Failure!!!')
+            print(out_str)
+            log_string(log_pltfrm, out_str)
     return df_response
         
 try:
@@ -141,8 +182,6 @@ try:
 except(KeyError) as error:
     err_txt = 'A key error occurred:'
     print(err_txt)
-    print('')
+    log_string(log_pltfrm, err_txt)
     print(error)
-    compose_mail(err_txt, err_txt)
-    send_mail()
-
+    log_string(log_pltfrm, error)

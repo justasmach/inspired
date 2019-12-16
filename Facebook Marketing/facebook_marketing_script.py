@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[12]:
-
-
 import sys, os, os.path
 base, tail = os.path.split(os.getcwd())
 sys.path.append(base)
 from helper_functions import *
 
-def facebook_marketing_api(account_id, df_conf_req, access_token, period): 
+def facebook_marketing_api(account_id, df_conf_req, access_token, period, log_pltfrm): 
     
     # create a list containing dimensions
     breakdown_lst_call = []
@@ -29,7 +26,9 @@ def facebook_marketing_api(account_id, df_conf_req, access_token, period):
         'time_increment': {1}
     }
     
+    start_call_str = 'Calling Facebook Marketing API...'
     print('Calling Facebook Marketing API...')
+    log_string(log_pltfrm, start_call_str)
     FacebookAdsApi.init(access_token=access_token, api_version = 'v5.0')
     response = AdAccount(account_id).get_insights(fields = dim_lst_call, params = param_set_lst)
     df_response = pd.DataFrame()
@@ -65,15 +64,18 @@ def facebook_marketing_api(account_id, df_conf_req, access_token, period):
         df_response = df_response.append(var_lst, ignore_index=True)
     if var_lst_action:
         df_response_action = df_response_action.append(var_lst_action, ignore_index=True)
-    print(str(row_count + 1) + ' row(s) received')
-
+    out_str = (str(row_count + 1) + ' row(s) received')
+    print(out_str)
+    log_string(log_pltfrm, out_str)
     return df_response, df_response_action
 
-def facebook_marketing_prep(def_intv, account_id, good_run, try_count):
+def facebook_marketing_prep(def_intv, account_id, good_run, try_count, log_pltfrm):
     do_drop = False
     do_drop_conv = False
     try:
-        print('Starting...')
+        out_str = ('Starting...')
+        print(out_str)
+        log_string(log_pltfrm, out_str)
 
         try:
             # read configuration from excel
@@ -89,8 +91,11 @@ def facebook_marketing_prep(def_intv, account_id, good_run, try_count):
                 if pd.isna(row['dimensions']):
                     raise KeyError('One or more dimensions missing')        
         except(NameError, XLRDError, KeyError) as error:
-            print('Error while reading configuration file(s)')
+            out_str = ('Error while reading configuration file(s)')
+            print(out_str)
+            log_string(log_pltfrm, out_str)
             print(error)
+            log_string(log_pltfrm, error)
             sys.exit(1)
 
         with open("fb_secrets.yaml", 'r') as secrets:
@@ -100,10 +105,14 @@ def facebook_marketing_prep(def_intv, account_id, good_run, try_count):
                 app_secret = str(secrets['app_secret'])
                 access_token = str(secrets['access_token'])
             except yaml.YAMLError as error:
-                print('Could not read FB secrets')
+                out_str = ('Could not read FB secrets')
+                print(out_str)
+                log_string(log_pltfrm, out_str)
                 print(error)
+                log_string(log_pltfrm, error)
                 sys.exit(1)
         print(def_period)
+        log_string(log_pltfrm, def_period)
         period_lst = period_split(dict(eval(def_period)), def_intv)
         per_dct_lst = []
         for idx in range(len(period_lst) - 1):
@@ -116,10 +125,15 @@ def facebook_marketing_prep(def_intv, account_id, good_run, try_count):
             per_dct_lst.append(period)
         # iterate over customers            
         try:
-            print('Account ID: ' + account_id)
+            out_str = ('Account ID: ' + account_id)
+            print(out_str)
+            log_string(log_pltfrm, out_str)
         except(KeyError) as error:
-            print('Could not read column')
+            out_str = 'Could not read column'
+            print(out_str)
+            log_string(log_pltfrm, out_str)
             print(error)
+            log_string(log_pltfrm, error)
             sys.exit(1)
         for per_dct in per_dct_lst:
             if per_dct not in good_run:
@@ -127,9 +141,12 @@ def facebook_marketing_prep(def_intv, account_id, good_run, try_count):
                 df_response = pd.DataFrame()
                 df_response_action = pd.DataFrame()
                 period = per_dct
-                print("Period")
+                out_str = 'Period'
+                print(out_str)
+                log_string(log_pltfrm, out_str)
                 print(period)
-                facebook_marketing_resp = facebook_marketing_api(account_id, df_conf_req, access_token, period)
+                log_string(log_pltfrm, period)
+                facebook_marketing_resp = facebook_marketing_api(account_id, df_conf_req, access_token, period, log_pltfrm)
                 df_response = facebook_marketing_resp[0]
                 df_response_action = facebook_marketing_resp[1]
 
@@ -142,60 +159,86 @@ def facebook_marketing_prep(def_intv, account_id, good_run, try_count):
                 is_pln_df = True
 
                 if not df_response_action.empty:
-                    postgre_write_main(df_response, t_name, pk_name, pk_lst, do_drop, page_size, src_col_name, is_pln_df)
+                    postgre_write_main(df_response, t_name, pk_name, pk_lst, do_drop, page_size, src_col_name, is_pln_df, log_pltfrm)
                     do_drop = False
                 t_name = 'facebook_marketing_conv_new'
                 pk_name = 'fb_cnv_new_pk'
                 src_col_name = 'campaign_name'
                 is_pln_df = True
                 if not df_response_action.empty:
-                    postgre_write_main(df_response_action, t_name, pk_name, pk_lst, do_drop_conv, page_size, src_col_name, is_pln_df)
+                    postgre_write_main(df_response_action, t_name, pk_name, pk_lst, do_drop_conv, page_size, src_col_name, is_pln_df, log_pltfrm)
                     do_drop_conv = False
-                print('Success')
+                out_str = 'Success'
+                print(out_str)
+                log_string(log_pltfrm, out_str)
                 good_run.append(period)
             
 
         return df_response, df_response_action
     except(KeyError) as error:
-        print('Key error')
+        out_str = ('Key error')
+        print(out_str)
+        log_string(log_pltfrm, out_str)
         print(error)
+        log_string(log_pltfrm, error)
         sys.exit(1)
     except(NameError) as error:
-        print('Name Error')
+        out_str = ('Name Error')
+        print(out_str)
+        log_string(log_pltfrm, out_str)
         print(error)
+        log_string(log_pltfrm, error)
         sys.exit(1)
     except(FacebookRequestError) as error:
         if "Please reduce the amount of data you're asking for" in str(error):
             def_intv = def_intv - 1
-            facebook_marketing_prep(def_intv, account_id, good_run)
+            facebook_marketing_prep(def_intv, account_id, good_run, try_count, log_pltfrm)
             if def_intv < 2:
-                print('day chunk size too large')
+                out_str = 'day chunk size too large'
+                print(out_str)
+                log_string(log_pltfrm, out_str)
                 print(error)
+                log_string(log_pltfrm, error)
                 sys.exit(1)
         elif 'There have been too many calls from this ad-account' in str(error) and try_count < 7:
-            print('Too many calls, sleep for half hour, then try again')
+            out_str = 'Too many calls, sleep for an hour, then try again'
+            print(out_str)
+            log_string(log_pltfrm, out_str)
             try_count = try_count + 1
             time.sleep(3600)
-            facebook_marketing_prep(def_intv, account_id, good_run, try_count)       
+            facebook_marketing_prep(def_intv, account_id, good_run, try_count, log_pltfrm)     
+        elif "\"message\": \"An unknown error occurred\"" in str(error) and "\"error_subcode\": 99" in str(error):
+            out_str = 'An unknown error occurred again. Waiting 5 mins and then trying to run again for the same period.'
+            print(out_str)
+            log_string(log_pltfrm, out_str)
+            try_count = try_count + 1
+            time.sleep(300)
+            facebook_marketing_prep(def_intv, account_id, good_run, try_count, log_pltfrm)   
         else:           
-            print('Facebook marketing API Error')
+            out_str = 'Facebook marketing API Error'
+            print(out_str)
+            log_string(log_pltfrm, out_str)
             print(error)
+            log_string(log_pltfrm, error)
             sys.exit(1)
             
 df_conf_base = pd.read_excel('facebook_marketing_conf_1.xlsx', sheet_name='base', header=0)
-def_intv = 3
+def_intv = 2
 try_count = 0
-for index, row in df_conf_base.iterrows():  
+log_pltfrm = 'facebook'
+for index, row in df_conf_base.iterrows():
     try:
         account_id = str(row['account_id'])
         #account_id = str(df_conf_base.iat[0,0])
         if pd.isna(df_conf_base['account_id'].iloc[0]):
             raise KeyError('No base data provided (account_id(s))')
         good_run = []
-        start = facebook_marketing_prep(def_intv, account_id, good_run, try_count)
+        start = facebook_marketing_prep(def_intv, account_id, good_run, try_count, log_pltfrm)
         df_response = start[0]
         df_response_action = start[1]
     except(KeyError) as error:
+        out_str = 'Key error'
+        log_string(log_pltfrm, out_str)
         print(error)
+        log_string(log_pltfrm, error)
         sys.exit(1)
-

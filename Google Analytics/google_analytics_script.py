@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[2]:
-
-
 import sys, os, os.path
 base, tail = os.path.split(os.getcwd())
 sys.path.append(base)
 from helper_functions import *
 
-def google_analytics(df_conf_req, view_id, key_file_location, scopes, period_lst):
+def google_analytics(df_conf_req, view_id, key_file_location, scopes, period_lst, log_pltfrm):
     
     
     # Initializes an Analytics Reporting API V4 service object.
@@ -17,8 +14,10 @@ def google_analytics(df_conf_req, view_id, key_file_location, scopes, period_lst
         credentials = ServiceAccountCredentials.from_json_keyfile_name(
                 key_file_location, scopes)
     except(NameError, IOError, FileNotFoundError) as error:
-        print('Could not read configuration file(s)')
+        out_str = 'Could not read configuration file(s)'
+        log_string(log_pltfrm, out_str)
         print(error)
+        log_string(log_pltfrm, error)
         sys.exit(1)   
 
     # Build the service object.
@@ -57,7 +56,8 @@ def google_analytics(df_conf_req, view_id, key_file_location, scopes, period_lst
 
     # create empty dataframe for response segment
     
-    print('Calling Google Analytics API...')
+    out_str = 'Calling Google Analytics API...'
+    log_string(log_pltfrm, out_str)
     try:
         # iterate over metric batches
         for index, batch in enumerate(met_batches):
@@ -113,20 +113,30 @@ def google_analytics(df_conf_req, view_id, key_file_location, scopes, period_lst
                 df_response = pd.merge(df_response, df_res_part,  how='inner', on=['ga:campaign', 'ga:adcontent', 'ga:channelGrouping', 'ga:keyword', 'ga:date', 'ga:sourceMedium'])
             row_count_part = len(df_res_part.index)
             row_count_full = len(df_response.index)
-            print('Batch ' + str(index + 1))
-            print(str(row_count_full) + ' row(s) received')
+            out_str = ('Batch ' + str(index + 1))
+            print(out_str)
+            log_string(log_pltfrm, out_str)
+            out_str = (str(row_count_full) + ' row(s) received')
+            print(out_str)
+            log_string(log_pltfrm, out_str)
         df_response['ga_viewid'] = view_id
         
     except(http.HttpError) as error:
         print('GA API error')
+        print(out_str)
+        log_string(log_pltfrm, out_str)
         print(error)  
+        log_string(log_pltfrm, error)
         sys.exit(1)
             
     return df_response
 
 
 def ga_prep():
-    print('Starting...')
+    log_pltfrm = 'google_analytics'
+    out_str = 'Starting...'
+    print(out_str)
+    log_string(log_pltfrm, out_str)
     do_drop = False
     try:
         # read configuration from excel
@@ -147,25 +157,34 @@ def ga_prep():
         period_lst = upd_last_90(period_lst, per_format)
         
         print(period_lst)
+        log_string(log_pltfrm, period_lst)
         key_file_location = 'client_secrets.json'
         scopes = ['https://www.googleapis.com/auth/analytics.readonly']
     except(NameError, XLRDError, KeyError) as error:
-        print('Error while reading configuration file(s)')
+        out_str = ('Error while reading configuration file(s)')
+        print(out_str)
+        log_string(log_pltfrm, out_str)
         print(error)
+        log_string(log_pltfrm, error)
         sys.exit(1)      
 
     # iterate over view IDs
     for index, row in df_conf_base.iterrows():
         try:
             view_id = str(int(row['view_id']))
-            print('View ID: ' + view_id)
+            out_str = ('View ID: ' + view_id)
+            print(out_str)
+            log_string(log_pltfrm, out_str)
         except(KeyError) as error:
-            print('Could not read column')
+            out_str = 'Could not read column'
+            print(out_str)
+            log_string(log_pltfrm, out_str)
             print(error)
+            log_string(log_pltfrm, error)
             sys.exit(1)
         
         # call defined methods
-        google_analytics_response = google_analytics(df_conf_req, view_id, key_file_location, scopes, period_lst)
+        google_analytics_response = google_analytics(df_conf_req, view_id, key_file_location, scopes, period_lst, log_pltfrm)
 
         t_name = 'google_analytics_new'
         pk_name = 'ga_new_pk'
@@ -176,15 +195,19 @@ def ga_prep():
         add_name_cl = True
         
         if not google_analytics_response.empty:
-            postgre_write_main(google_analytics_response, t_name, pk_name, pk_lst, do_drop, page_size, src_col_name, is_pln_df)
+            postgre_write_main(google_analytics_response, t_name, pk_name, pk_lst, do_drop, page_size, src_col_name, is_pln_df, log_pltfrm)
             do_drop = False
-        print('Success')
+        out_str = ('Success')
+        print(out_str)
           
 try:
     ga_prep()
 except(KeyError) as error:
+    out_str = ('Key Error')
+    print(out_str)
+    log_string(log_pltfrm, out_str)
     print(error)
-    print('error key')
+    log_string(log_pltfrm, error)
+    
         
         
-
