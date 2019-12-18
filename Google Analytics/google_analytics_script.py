@@ -110,7 +110,7 @@ def google_analytics(df_conf_req, view_id, key_file_location, scopes, period_lst
                 df_response = df_res_part
             # else do a left join and combine the two
             elif not df_res_part.empty:
-                df_response = pd.merge(df_response, df_res_part,  how='inner', on=['ga:campaign', 'ga:adcontent', 'ga:channelGrouping', 'ga:keyword', 'ga:date', 'ga:sourceMedium'])
+                df_response = pd.merge(df_response, df_res_part,  how='left', on=['ga:campaign', 'ga:adcontent', 'ga:channelGrouping', 'ga:keyword', 'ga:date', 'ga:sourceMedium'])
             row_count_part = len(df_res_part.index)
             row_count_full = len(df_response.index)
             out_str = ('Batch ' + str(index + 1))
@@ -132,8 +132,7 @@ def google_analytics(df_conf_req, view_id, key_file_location, scopes, period_lst
     return df_response
 
 
-def ga_prep():
-    log_pltfrm = 'google_analytics'
+def ga_prep(log_pltfrm):
     out_str = 'Starting...'
     print(out_str)
     log_string(log_pltfrm, out_str)
@@ -175,7 +174,7 @@ def ga_prep():
             out_str = ('View ID: ' + view_id)
             print(out_str)
             log_string(log_pltfrm, out_str)
-        except(KeyError) as error:
+        except(KeyError, ValueError) as error:
             out_str = 'Could not read column'
             print(out_str)
             log_string(log_pltfrm, out_str)
@@ -197,17 +196,21 @@ def ga_prep():
         if not google_analytics_response.empty:
             postgre_write_main(google_analytics_response, t_name, pk_name, pk_lst, do_drop, page_size, src_col_name, is_pln_df, log_pltfrm)
             do_drop = False
-        out_str = ('Success')
-        print(out_str)
-          
+            out_str = ('Success')
+            print(out_str)
+            log_string(log_pltfrm, out_str)
 try:
-    ga_prep()
-except(KeyError) as error:
+    log_pltfrm = 'google_analytics'
+    ga_prep(log_pltfrm)
+except KeyError as error:
     out_str = ('Key Error')
     print(out_str)
     log_string(log_pltfrm, out_str)
     print(error)
     log_string(log_pltfrm, error)
+    
+        
+        
     
         
         

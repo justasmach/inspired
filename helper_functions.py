@@ -8,6 +8,7 @@ import psycopg2.extras
 import pandas as pd
 import numpy as np
 import smtplib
+import requests
 import urllib.request
 import google.ads.google_ads.client
 from googleapiclient.discovery import build
@@ -23,9 +24,6 @@ from ast import literal_eval
 from datetime import datetime, timedelta, date
 from oauth2client.service_account import ServiceAccountCredentials
 from func_timeout import func_timeout, FunctionTimedOut
-
-# from itertools import count
-
 
 
 # ---------------- DATABASE FUNCTIONS ----------------
@@ -149,12 +147,19 @@ def rename_col(col_name):
 
 # dynamic update or insert string, updates everything except for creation_ts
 def upsert_str(dims, t_name, pk):
-    upsert_q = (f"INSERT INTO {t_name} ({dims}) "
+    upd_str = (' SET ')
+    upd_str_dim = ''
+    for dim in dims:
+        if dim != 'creation_ts':
+            str_tmp = f"{dim} = EXCLUDED.{dim}, "
+            upd_str_dim = upd_str_dim + str_tmp
+    upd_str = str(upd_str + upd_str_dim)[1:-2] + ';'
+    upsert_q = (f"INSERT INTO {t_name} ({', '.join(dims)}) "
                         "VALUES %s "
                         f"ON CONFLICT ({pk}) " 
                             f"DO "
                                 f"UPDATE "
-                                f"SET creation_ts = EXCLUDED.creation_ts; ")
+                                f"{upd_str} ")
     return str(upsert_q)
 
 # dynamic missing column string, adds columns if missing between API calls
@@ -209,13 +214,13 @@ def period_split(def_period, def_intv):
 
 # apply pln_no_reg and insert new column to dataframe with the clean PLN
 def get_pln_no(df_response, src_col_name, is_in_df):
-    if is_in_df:
+    if is_in_df and src_col_name in df_response.columns:
         df_response.insert(0, 'pln_no', df_response[src_col_name].apply(pln_no_reg))
     return df_response
 
 # apply name_cl_reg and insert new column to dataframe with the clean campaign name 
 def get_name_col(df_response, src_col_name, is_in_df):
-    if is_in_df:
+    if is_in_df and src_col_name in df_response.columns:
         df_response.insert(0, 'campaing_name_noPLN', df_response[src_col_name].apply(name_cl_reg))
     return df_response
 
@@ -246,10 +251,10 @@ def get_types(df_response):
                 elif (re.match('\d{4}\-\d{2}\-\d{2}', str(row[key])) and 'keyword' not in str(key).lower()) or 'ga_date' in str(key).lower():
                     is_date = True
                     break
-                elif 'float' in str(type(literal_eval(row[key]))) or str(key).lower() == 'value' or str(key).lower() == 'spend' or 'd_view' in str(key).lower() or 'd_click' in str(key).lower():
+                elif 'float' in str(type(literal_eval(str(row[key])))) or str(key).lower() == 'value' or str(key).lower() == 'spend' or 'd_view' in str(key).lower() or 'd_click' in str(key).lower():
                     is_real = True
                     break
-                elif 'int' in str(type(literal_eval(row[key]))):
+                elif 'int' in str(type(literal_eval(str(row[key])))):
                     is_int = True
             except (ValueError, SyntaxError):
                 pass
@@ -306,7 +311,7 @@ def postgre_write_main(df_response, t_name, pk_name, pk_lst, do_drop, page_size,
         add_missing_cl(conn, cur, t_name, missing_cl_str)
         
         df_res_tuple = list(df_response.itertuples(index=False, name=None))
-        upsert_q = upsert_str((','.join(dtype_dict.keys())), t_name, (','.join(pk_lst)))
+        upsert_q = upsert_str(dtype_dict.keys(), t_name, (','.join(pk_lst)))
         upsert(conn, cur, upsert_q, df_res_tuple, page_size)    
         
         end_cur(cur)
