@@ -86,7 +86,12 @@ def google_ads(client, customer_id, page_size, df_conf_req, period, log_pltfrm):
                     out_str = ('\t\tOn field: %s' % field_path_element.field_name)
                     print(out_str)
                     log_string(log_pltfrm, out_str)
-        sys.exit(1)
+        if "The customer can't be used because it isn't enabled" in error.message:
+            out_str = "USER NOT ENABLED, CONTINUING"
+            print(out_str)
+            log_string(log_pltfrm, out_str)
+        else:
+            sys.exit(1)
     out_str = (str(row_count + 1) + ' row(s) received')
     print(out_str)
     log_string(log_pltfrm, out_str)
@@ -115,7 +120,7 @@ def start():
         period = str(df_conf_req.iat[0,1])
         per_format = "segments.date >= 'x1' AND segments.date <= 'x2'"
         period = upd_last_90(period, per_format)
-    except(NameError, XLRDError, KeyError) as error:
+    except(NameError, XLRDError, KeyError, FileNotFoundError) as error:
         out_str = ('Error while reading configuration file(s)')
         print(out_str)
         log_string(log_pltfrm, out_str)
@@ -172,7 +177,7 @@ def start():
             print(out_str)
             log_string(log_pltfrm, out_str)
         else:
-            out_str = ('Failure!!!')
+            out_str = ('Dataframe empty')
             print(out_str)
             log_string(log_pltfrm, out_str)
     return df_response

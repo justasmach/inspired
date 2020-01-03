@@ -158,7 +158,7 @@ def facebook_marketing_prep(def_intv, account_id, good_run, try_count, log_pltfr
                 src_col_name = 'campaign_name'
                 is_pln_df = True
 
-                if not df_response_action.empty:
+                if not df_response.empty:
                     postgre_write_main(df_response, t_name, pk_name, pk_lst, do_drop, page_size, src_col_name, is_pln_df, log_pltfrm)
                     do_drop = False
                 t_name = 'facebook_marketing_conv_new'
@@ -200,6 +200,13 @@ def facebook_marketing_prep(def_intv, account_id, good_run, try_count, log_pltfr
                 print(error)
                 log_string(log_pltfrm, error)
                 sys.exit(1)
+        elif "\"message\": \"Service temporarily unavailable\"" in str(error):
+            out_str = 'Service temporarily unavailable error received. Waiting 5 mins and then trying to run again for the same period.'
+            print(out_str)
+            log_string(log_pltfrm, out_str)
+            try_count = try_count + 1
+            time.sleep(300)
+            facebook_marketing_prep(def_intv, account_id, good_run, try_count, log_pltfrm)         
         elif 'There have been too many calls from this ad-account' in str(error) and try_count < 7:
             out_str = 'Too many calls, sleep for an hour, then try again'
             print(out_str)

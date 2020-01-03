@@ -110,7 +110,10 @@ def google_analytics(df_conf_req, view_id, key_file_location, scopes, period_lst
                 df_response = df_res_part
             # else do a left join and combine the two
             elif not df_res_part.empty:
-                df_response = pd.merge(df_response, df_res_part,  how='left', on=['ga:campaign', 'ga:adcontent', 'ga:channelGrouping', 'ga:keyword', 'ga:date', 'ga:sourceMedium'])
+                df_response = pd.merge(df_response, df_res_part,  how='outer', on=['ga:campaign', 'ga:adcontent', 'ga:channelGrouping', 'ga:keyword', 'ga:date', 'ga:sourceMedium'], suffixes=('', '_y'))
+                df_response.drop_duplicates(subset =pk_lst, keep = 'first', inplace = True)
+                to_drop = [x for x in df_response if x.endswith('_y')]
+                df_response.drop(to_drop, axis=1, inplace=True)
             row_count_part = len(df_res_part.index)
             row_count_full = len(df_response.index)
             out_str = ('Batch ' + str(index + 1))
@@ -194,6 +197,7 @@ def ga_prep(log_pltfrm):
         add_name_cl = True
         
         if not google_analytics_response.empty:
+            df_response = df_response.loc[:,~df_response.columns.duplicated()]
             postgre_write_main(google_analytics_response, t_name, pk_name, pk_lst, do_drop, page_size, src_col_name, is_pln_df, log_pltfrm)
             do_drop = False
             out_str = ('Success')
@@ -208,9 +212,3 @@ except KeyError as error:
     log_string(log_pltfrm, out_str)
     print(error)
     log_string(log_pltfrm, error)
-    
-        
-        
-    
-        
-        

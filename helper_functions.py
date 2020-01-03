@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import smtplib
 import requests
+import httplib2
 import urllib.request
 import google.ads.google_ads.client
 from googleapiclient.discovery import build
@@ -43,7 +44,7 @@ def db_config(filename, section):
         for param in params:
             db[param[0]] = param[1]
     else:
-        raise Exception('Section {0} not found in the {1} file'.format(section, filename)) 
+        raise Exception('Section {0} not found in the {1} file'.format(section, filename))
     return db
 
 # initiate db connection
@@ -136,14 +137,16 @@ def rplc_nan(df_response):
 
 # rename column headers if any unsupported chars are found, due to db limitations
 def rename_col(col_name):
-    if '.' in col_name:
-        return col_name.replace('.', '_')
-    elif ':' in col_name:
-        return col_name.replace(':', '_')
-    elif col_name[0].isdigit() or col_name == 'order':
-        return ('_' + col_name)
-    else:
-        return col_name
+    char_lst = ['.', ':', ' ', "(", ")", "-"]
+    new_col = col_name
+    for char in char_lst:
+        if char in col_name:
+            new_col = col_name.replace(char, '_')
+            col_name = new_col
+        if col_name[0].isdigit() or col_name == 'order':
+            new_col = ('_' + col_name)
+            col_name = new_col
+    return new_col
 
 # dynamic update or insert string, updates everything except for creation_ts
 def upsert_str(dims, t_name, pk):
