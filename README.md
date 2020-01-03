@@ -1,4 +1,4 @@
-The Problem
+_**The Problem**_
 
 When we report on ad performance the customer needs a certain amount of detail to capture efficiency and differences between platforms being used.
 
@@ -16,13 +16,13 @@ All of these services have their own APIs exposed to the users for easy data ext
 
 Inspired has a set up on AWS which has a PostgreSQL database running. This database contains data from multiple other sources already.
 
-The Goal 
+_**The Goal**_ 
 
 Building an ETL framework in Python to automatically extract data and store it in the Postgre DB after additional data manipulation is done. A basic diagram below shows the workflow:
 
 ![](https://storage.googleapis.com/slite-api-files-production/files/3fb836b8-b37a-4183-aa77-d21c4e72fbd5/workflow.PNG)
 
-Code Structure
+_**Code Structure**_
 
 The code is structured employing the functional / procedural paradigm so that parts can be reused and to make the code more readable.
 
@@ -98,11 +98,11 @@ Facebook: <https://developers.facebook.com/docs/marketing-apis/>
 
 AdForm: <https://api.adform.com/help/references/buyer-solutions/reporting>
 
-Logging
+_**Logging**_
 
 The code has logging built into it. A log file is appended to every time the code is run but it's distinct by platform and by day, not by run, meaning that only a single file will be generated per platform, per day no matter how many times the code is run. The Python _Logging _library was not used, because there was simply no need for it's extended functionality.
 
-Database
+_**Database**_
 
 The following tables are either created or most likely inserted into when the code is run:
 
@@ -118,9 +118,9 @@ All of them have very different columns and primary keys, which could also chang
 
 Database table configuration is done in the code itself, but is mostly standard accross all platform scripts.
 
-Use cases
+_**Use cases**_
 
-_**Reporting automation**_
+Reporting automation
 
 All of the source code is uploaded to Windows 2012 server and saved in the _Documents _folder under the _reporting_ username. The same file structure is kept. Automation is achieved by using the built in Windows Task Scheduler. All of the code is run every night at 01:00 AM (unless changed).
 
@@ -132,7 +132,7 @@ All scripts are defined to run with the following configuration, which is as see
 
 ![](https://storage.googleapis.com/slite-api-files-production/files/5bc87475-3128-4cd5-803b-5838ffc7d77e/Untitled3.png)
 
-_**Custom reports**_
+Custom reports
 
 If needed the excel file can be configured as preferred (or in cases like with Google Marketing Platform one would use the Report Builder instead of the excel file). One can change period, dimensions, metrics etc. In most cases this should work without any code changes, but some of the platforms have limitations of what kinds of dimension/metric combinations can be requested for a single data entry (for ex. Facebook). Also, there could be some undefined technical shortcomings of the source code, for ex. some dimension names can include unsupported characters (database column name constraints) that were not met in the development stage.
 
