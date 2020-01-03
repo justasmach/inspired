@@ -122,15 +122,9 @@ _**Use cases**_
 
 Reporting automation
 
-All of the source code is uploaded to Windows 2012 server and saved in the _Documents _folder under the _reporting_ username. The same file structure is kept. Automation is achieved by using the built in Windows Task Scheduler. All of the code is run every night at 01:00 AM (unless changed).
-
-All scripts are defined to run with the following configuration, which is as seen in the pictures:
-
-![](https://storage.googleapis.com/slite-api-files-production/files/c07d508d-e7b5-4067-a288-24514d0851c6/Untitled1.png)
-
-![](https://storage.googleapis.com/slite-api-files-production/files/55029f21-5091-4522-8b38-2ef341699a94/Untitled2.png)
-
-![](https://storage.googleapis.com/slite-api-files-production/files/5bc87475-3128-4cd5-803b-5838ffc7d77e/Untitled3.png)
+All of the source code is uploaded to Windows 2012 server and saved in the Documents folder under the reporting username. The same file structure is kept. One of the way automation can be achieved is by using the built in Windows Task Scheduler.
+Here is a tutorial on how to automate Python script execution using Windows Task Scheduler:
+http://theautomatic.net/2017/10/03/running-python-task-scheduler/
 
 Custom reports
 
