@@ -136,17 +136,31 @@ def rplc_nan(df_response):
     return df_response
 
 # rename column headers if any unsupported chars are found, due to db limitations
-def rename_col(col_name):
-    char_lst = ['.', ':', ' ', "(", ")", "-"]
-    new_col = col_name
-    for char in char_lst:
-        if char in col_name:
-            new_col = col_name.replace(char, '_')
-            col_name = new_col
-        if col_name[0].isdigit() or col_name == 'order':
-            new_col = ('_' + col_name)
-            col_name = new_col
-    return new_col
+def rename_col(col_name): 
+    char_dct = {".": "_",
+                ":": "_",
+                " ": "_",
+                "(": "_",
+                ")": "_",
+                "-": "_",
+                "%": "_",
+                ",": "_",
+                ":": "_",
+                "'": "_",
+                "/": "_",
+                "\\": "_",
+                "<=": "_less_th_or_eq_to_",
+                ">=": "_more_th_or_eq_to_",
+                "<": "_less_than_",
+                ">": "_more_than_",
+                "=": "_eq_to_",
+                "+": "_plus_"}
+    for key in char_dct:
+        if key in col_name:
+            col_name = col_name.replace(key, char_dct[key])
+    if col_name[0].isdigit() or col_name.lower() == 'order' or col_name.lower() == 'group':
+        col_name = ('_' + col_name)
+    return col_name
 
 # dynamic update or insert string, updates everything except for creation_ts
 def upsert_str(dims, t_name, pk):
@@ -242,6 +256,7 @@ def get_types(df_response):
         is_date = False
         is_real = False
         is_int = False
+        is_str = False
         dtype = ''
         # iterates through every column and row, to assign proper data type (includes exceptions)
         for i, row in df_response.iterrows():
@@ -260,14 +275,15 @@ def get_types(df_response):
                 elif 'int' in str(type(literal_eval(str(row[key])))):
                     is_int = True
             except (ValueError, SyntaxError):
+                is_str = True
                 pass
-        if is_ts:
+        if is_ts and not is_str:
             dtype = 'TIMESTAMP'
-        elif is_date:
+        elif is_date and not is_str:
             dtype = 'DATE'
-        elif is_real:
+        elif is_real and not is_str:
             dtype = 'REAL'
-        elif is_int:
+        elif is_int and not is_str:
             dtype = 'BIGINT'
         else:
             dtype = 'VARCHAR'
@@ -319,7 +335,7 @@ def postgre_write_main(df_response, t_name, pk_name, pk_lst, do_drop, page_size,
         
         end_cur(cur)
         end_conn(conn)
-    except (Exception, psycopg2.DatabaseError) as error:
+    except(Exception, psycopg2.DatabaseError) as error:
         out_str = 'Database error'
         log_string(log_pltfrm, out_str)
         print(error)

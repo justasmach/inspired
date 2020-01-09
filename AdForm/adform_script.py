@@ -142,7 +142,7 @@ def adform_api(df_conf_req, payload_tkn, period_lst, log_pltfrm, postman_tkn, ca
             out_str = ('Row count: ' + str(row_count))
             log_string(log_pltfrm, out_str)
             print(out_str)
-        except KeyError as error:
+        except Exception as error:
             if 'Response [4' in rep_rsp or 'Response [5' in rep_rsp:
                 out_str = ('Bad request, error 400 or 500')
                 print(out_str)

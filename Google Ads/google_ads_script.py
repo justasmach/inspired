@@ -59,7 +59,7 @@ def google_ads(client, customer_id, page_size, df_conf_req, period, log_pltfrm):
                     df_response.loc[index, dim_lst[idx]] = str(channel_types.AdvertisingChannelType.Name(eval('row.' + dim_lst[idx])))
                     df_response[dim_lst[idx]] = df_response[dim_lst[idx]].astype('object')
                 elif dim_lst[idx] == 'metrics.cost_micros':                 
-                    df_response.loc[index, dim_lst[idx]] = float(float(eval(new_dim)) / 100000)
+                    df_response.loc[index, dim_lst[idx]] = float(float(eval(new_dim)) / 10000000)
                     df_response[dim_lst[idx]] = df_response[dim_lst[idx]].astype('float64')
                 elif new_dim_dtype_lst[idx] == 'int':
                     df_response.loc[index, dim_lst[idx]] = int(eval(new_dim))
