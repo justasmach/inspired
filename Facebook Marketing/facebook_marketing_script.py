@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 import sys, os, os.path
 base, tail = os.path.split(os.getcwd())
 sys.path.append(base)
@@ -37,7 +34,7 @@ def facebook_marketing_api(account_id, df_conf_req, access_token, period, log_pl
 
     var_lst = []
     var_lst_action = []
-
+    
     for index, row in enumerate(response):
         row_count = index
         row_dict = vars(row)['_data']
@@ -52,14 +49,14 @@ def facebook_marketing_api(account_id, df_conf_req, access_token, period, log_pl
                 action_values = row_dict['action_values']
                 if action_values:
                     for key in action_values:
-                        var_dict_action.update(key)
+                        var_dict_action = {}
+                        if key:
+                            var_dict_action.update(key)
+                            var_dict_action.update(var_dict_core)
+                            var_lst_action.append(var_dict_action)
             elif key != 'date_stop':
                 var_dict.update({key : row_dict[key]})
-        var_lst.append(var_dict)
-        if 'action_values' in str(row_dict.keys()):
-            if row_dict['action_values']:
-                var_dict_action.update(var_dict_core)
-                var_lst_action.append(var_dict_action)
+    var_lst.append(var_dict)
     if var_lst:
         df_response = df_response.append(var_lst, ignore_index=True)
     if var_lst_action:
@@ -152,13 +149,14 @@ def facebook_marketing_prep(def_intv, account_id, good_run, try_count, log_pltfr
 
                 t_name = 'facebook_marketing_new'
                 pk_name = 'fb_new_pk'
-                pk_lst = ['account_id', 'campaign_id', 'adset_id', 'date_start', 'objective', 'publisher_platform', 'platform_position']
+                #pk_lst = ['account_id', 'campaign_id', 'adset_id', 'date_start', 'objective', 'publisher_platform', 'platform_position']
 
                 page_size = 1000
                 src_col_name = 'campaign_name'
                 is_pln_df = True
 
                 if not df_response.empty:
+                    pk_lst = ['account_id', 'campaign_id', 'adset_id', 'date_start', 'objective', 'publisher_platform', 'platform_position']
                     postgre_write_main(df_response, t_name, pk_name, pk_lst, do_drop, page_size, src_col_name, is_pln_df, log_pltfrm)
                     do_drop = False
                 t_name = 'facebook_marketing_conv_new'
@@ -166,6 +164,7 @@ def facebook_marketing_prep(def_intv, account_id, good_run, try_count, log_pltfr
                 src_col_name = 'campaign_name'
                 is_pln_df = True
                 if not df_response_action.empty:
+                    pk_lst = ['account_id', 'campaign_id', 'adset_id', 'date_start', 'objective', 'publisher_platform', 'platform_position', 'action_type']
                     postgre_write_main(df_response_action, t_name, pk_name, pk_lst, do_drop_conv, page_size, src_col_name, is_pln_df, log_pltfrm)
                     do_drop_conv = False
                 out_str = 'Success'

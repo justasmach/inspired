@@ -7,7 +7,7 @@ sys.path.append(base)
 from helper_functions import *
 
 def read_txt(log_pltfrm, file_dir, file, start_pos, enc):
-    out_str = 'Starting...'
+    out_str = 'Reading...'
     print(out_str)
     log_string(log_pltfrm, out_str)
     try:
@@ -34,15 +34,15 @@ def mailer(message):
     mailserver.ehlo()
     mailserver.starttls()
     mailserver.login(user, password)
-    message = """From: Reports API <%s>
-To: Justinas Maciulis <%s>
+    message = """From: <%s>
+To: <%s>
 Subject: %s warning
 
 System time: %s
 
 Error message(s)
 %s
-""" % (user, receiver_lst[1:-1], platform, datetime.now(), message)
+""" % (user, receiver_lst, platform, datetime.now(), message)
     mailserver.sendmail(user, list(receiver_lst.split(",")) , message)
     mailserver.quit()
 def db_del(df_plan, t_name):
@@ -56,32 +56,50 @@ def db_del(df_plan, t_name):
     end_conn(conn)
 
 try:
-    file_dir = 'R:\\09.Reporting_Dep\\Default_Data\\InfoSys\\'
+    file_dir = 'Z:\\09.Reporting_Dep\\Default_Data\\InfoSys\\'
     log_pltfrm = 'instar'
-    do_drop = True
+    do_drop = False
     file_lst = [
-                #'Last_day_All_Spots.txt',
-               # 'Last_week_All_Spots.txt',
-                'LastDayTiimeBands.txt',
-               # 'LastWeekTiimeBands.txt'
+#                 'Last_day_All_Spots.txt'
+#                 ,'Last_week_All_Spots.txt'
+#                 ,'LastDayTiimeBands.txt'
+#                 ,'LastWeekTiimeBands.txt'
+                '2016_timeBands.txt'
+                ,'2017_timeBands.txt'
+                ,'2018_timeBands.txt'
+                ,'2019_timeBands.txt'
+                ,'2020_timeBands.txt'
+                ,'All_Spots_2016.txt'
+                ,'All_Spots_2017.txt'
+                ,'All_Spots_2018.txt'
+                ,'All_Spots_2019.txt'
+                ,'All_Spots_2020.txt'
                 ]
     for file in file_lst:
         out_str = ('File: ' + file)
         print(out_str)
         log_string(log_pltfrm, out_str)
-        if 'All_Spots' in file:
+        df_plan = pd.DataFrame()
+        date_range = []
+        date_col_uniq =[]
+        t_name =''
+        pk_name = ''
+        pk_list = []
+        if 'all_spots' in file.lower():
             enc = 'ISO-8859-1'
             start_pos = 2
             df_plan = read_txt(log_pltfrm, file_dir, file, start_pos, enc)
             df_plan = df_plan.drop(df_plan.index[0])      
             
             date_range = pd.date_range(start=df_plan.Date.min(), end=df_plan.Date.max(), freq='D')
-            date_col = df_plan.Date
+            df_plan['Date'] =  pd.to_datetime(df_plan['Date'], infer_datetime_format=True)
+            date_col_uniq = df_plan.Date.unique()
             
             t_name = 'instar_all_spots'
             pk_name = 'instar_all_spots_pk'
             pk_lst = ['Campaign', 'Channel', 'Date', 'Start_time', 'Brand', 'Advertiser']
-        elif 'TiimeBands' in file:
+            
+        elif 'tiimebands' in file.lower() or 'timebands' in file.lower():
             enc = 'utf-8'
             start_pos = 2
             df_plan = read_txt(log_pltfrm, file_dir, file, start_pos, enc)
@@ -89,12 +107,14 @@ try:
             df_plan.drop('Timebands', axis=1, inplace=True)  
             
             date_range = pd.date_range(start=df_plan.Dates.min(), end=df_plan.Dates.max(), freq='D')
-            date_col = df_plan.Dates
+            df_plan['Dates'] =  pd.to_datetime(df_plan['Dates'], infer_datetime_format=True)
+            date_col_uniq = df_plan.Dates.unique()
             
             t_name = 'instar_time_bands'
             pk_name = 'instar_time_bands_pk'
             pk_lst = ['Channels', 'Dates', 'Timeband_start', 'Timeband_end']
-        page_size = 100000
+            
+        page_size = 10000
         src_col_name = 'PLN_ID'
         is_pln_df = False
         add_name_cl = False
@@ -102,7 +122,7 @@ try:
         result_str = ''
         is_missing = False
         for date in date_range:
-            if not str(date.date()) in str(date_col):
+            if not str(date.date()) in str(date_col_uniq):
                 out_str = f'Date is missing: {date.date()} for file: {file}!'
                 print(out_str)
                 log_string(log_pltfrm, out_str)

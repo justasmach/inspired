@@ -22,6 +22,7 @@ from facebook_business.adobjects.campaign import Campaign
 from facebook_business.adobjects.adset import AdSet
 from facebookads.adobjects.adsinsights import AdsInsights
 from ast import literal_eval
+from simplejson import JSONDecodeError
 from datetime import datetime, timedelta, date
 from oauth2client.service_account import ServiceAccountCredentials
 from func_timeout import func_timeout, FunctionTimedOut

@@ -110,7 +110,7 @@ def adform_api(df_conf_req, payload_tkn, period_lst, log_pltfrm, postman_tkn, ca
 
             data_json = json.loads(rep_rsp.text)
             columns = data_json['reportData']['columns']
-            
+
             out_str = ('Response code: ' + str(rep_rsp))
             print(out_str)
             log_string(log_pltfrm, out_str)
@@ -134,7 +134,7 @@ def adform_api(df_conf_req, payload_tkn, period_lst, log_pltfrm, postman_tkn, ca
                 df_response = df_res_part
                 # else do a left join and combine the two
             elif not df_res_part.empty:
-                df_response = pd.merge(df_response, df_res_part,  how='outer', on=['date', 'campaignID', 'lineItemID', 'orderID'], suffixes=('', '_y'))
+                df_response = pd.merge(df_response, df_res_part,  how='outer', on=pk_lst, suffixes=('', '_y'))
                 df_response.drop_duplicates(subset =pk_lst, keep = 'first', inplace = True)
                 to_drop = [x for x in df_response if x.endswith('_y')]
                 df_response.drop(to_drop, axis=1, inplace=True)
@@ -143,10 +143,6 @@ def adform_api(df_conf_req, payload_tkn, period_lst, log_pltfrm, postman_tkn, ca
             log_string(log_pltfrm, out_str)
             print(out_str)
         except Exception as error:
-            if 'Response [4' in rep_rsp or 'Response [5' in rep_rsp:
-                out_str = ('Bad request, error 400 or 500')
-                print(out_str)
-                log_string(log_pltfrm, out_str)
             if 'quotaLimitExceeded' in str(data_json):
                 is_time_given = re.search('etry\s*in\s*(\d{1,3})', str(data_json))
                 if is_time_given:
@@ -163,12 +159,25 @@ def adform_api(df_conf_req, payload_tkn, period_lst, log_pltfrm, postman_tkn, ca
                     out_str = ('Call quota reached. Wait time not given, waiting for 60 secs and calling again')
                     log_string(log_pltfrm, out_str)
                     break
+            if 'Response [4' in str(rep_rsp) or 'Response [5' in str(rep_rsp):
+                out_str = ('Bad request, error not defined (400 or 500). Waiting for 60 secs and calling again.')
+                print(out_str)
+                log_string(log_pltfrm, out_str)
+                time.sleep(60)
+                call_cnt = adform_api(df_conf_req, payload_tkn, period_lst, log_pltfrm, postman_tkn, call_cnt, account, do_drop)
+                break
             else:
-                out_str = 'Unknown key error, exiting'
+                out_str = 'Unknown error, exiting'
                 print(out_str)  
                 print(error)
                 log_string(log_pltfrm, out_str)
                 log_string(log_pltfrm, error)
+                out_str = 'Response code: \n' + str(rep_rsp)
+                print(out_str)
+                log_string(log_pltfrm, out_str)
+                out_str = 'JSON received: \n' + str(data_json)
+                print(out_str)
+                log_string(log_pltfrm, out_str)
                 sys.exit(1)
             print(error)
             log_string(log_pltfrm, error)
@@ -186,7 +195,7 @@ def adform_prep(log_pltfrm, call_cnt):
     out_str = 'Starting...'
     print(out_str)
     log_string(log_pltfrm, out_str)
-    do_drop = True
+    do_drop = False
     try:
         # read configuration from excel
         df_conf_base = pd.read_excel('adform_conf_1.xlsx', sheet_name='base', header=0)
