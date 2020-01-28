@@ -213,7 +213,7 @@ def facebook_marketing_prep(def_intv, account_id, good_run, try_count, log_pltfr
             try_count = try_count + 1
             time.sleep(3600)
             facebook_marketing_prep(def_intv, account_id, good_run, try_count, log_pltfrm)     
-        elif "\"message\": \"An unknown error occurred\"" in str(error) and "\"error_subcode\": 99" in str(error):
+        elif "\"message\": \"An unknown error occurred\"" in str(error):
             out_str = 'An unknown error occurred again. Waiting 5 mins and then trying to run again for the same period.'
             print(out_str)
             log_string(log_pltfrm, out_str)

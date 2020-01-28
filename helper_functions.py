@@ -118,15 +118,19 @@ def get_db_cols(cur, t_name):
 
 # use regex to extract PLN from a single string
 def pln_no_reg(campaign_name):
-    pln_no = str(re.findall('(PLN?[\-]\d{1,4}?[\-]\d{1,4})', campaign_name))[2:-2]
-    return pln_no
+    if campaign_name:
+        campaign_name = str(campaign_name)
+        pln_no = str(re.findall('(PLN?[\-]\d{1,4}?[\-]\d{1,4})', campaign_name))[2:-2]
+        return pln_no
 
 # use regex to extract only the campaign name from a single string
 def name_cl_reg(campaign_name):
-    pln = str(re.findall('(PLN?[\-]\d{1,4}?[\-]\d{1,4})', campaign_name))[2:-2]
-    name_cl = campaign_name.replace(pln, '')
-    name_cl = str(re.findall('^[^a-zA-Z\d]*(.*)', name_cl))[2:-2]
-    return name_cl
+    if campaign_name:
+        campaign_name = str(campaign_name)
+        pln = str(re.findall('(PLN?[\-]\d{1,4}?[\-]\d{1,4})', campaign_name))[2:-2]
+        name_cl = campaign_name.replace(pln, '')
+        name_cl = str(re.findall('^[^a-zA-Z\d]*(.*)', name_cl))[2:-2]
+        return name_cl
 
 # ---------------- STRING OPERATIONS ----------------
 
