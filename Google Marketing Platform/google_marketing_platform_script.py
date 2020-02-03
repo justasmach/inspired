@@ -38,23 +38,21 @@ def google_marketing(profile_id, report_id, key_file_location, scopes, log_pltfr
         from googleapiclient.errors import HttpError
         
         # Wait for the report file to finish processing.
+        # An exponential backoff strategy is used to conserve request quota.
         sleep = 30
         start_time = time.time()
         MAX_RETRY_ELAPSED_TIME = 3600
         while True:
-            # Make the request
             report_file = service.files().get(
                 reportId=report_ID, fileId=file_ID).execute()
 
             status = report_file['status']
-            # Check status, if processing - wait, if ready - save to dataframe
             if status == 'REPORT_AVAILABLE':
                 csv_raw = []
-                
                 request_file = service.files().get_media(reportId=report_ID, fileId=file_ID)
 
                 csv_raw.append(str(request_file.execute()))
-                csv_string = '\n'.join(csv_raw)
+                csv_string = '\n'.join(csv_raw) # Join reports if you have more than 1 generated
 
                 # Turning csv format data into 2-D arrays
                 data = csv_string.split('\\n')
